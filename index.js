@@ -1,25 +1,37 @@
 const { addonBuilder } = require("stremio-addon-sdk");
-const express = require("express");
-const fs = require("fs");
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const streams = JSON.parse(fs.readFileSync("./links.json"));
+const LINKS_URL = "https://gist.githubusercontent.com/DavidTurP/e1669bd33899df3dc949ceda9977555d/raw/d6c09e99a427095e7479a5dda803b1ba45922b83/links.json";
 
-const addon = new addonBuilder({
-  id: "org.david.custom",
+const manifest = {
+  id: "org.custom.links",
   version: "1.0.0",
-  name: "Addon Prueba",
-  description: "Mis links privados",
+  name: "Mi Addon Personal",
+  description: "Addon con mis enlaces personalizados",
+  types: ["movie"],
   catalogs: [],
-  resources: ["stream"],
-  types: ["movie", "series"],
+  resources: ["stream"]
+};
+
+const builder = new addonBuilder(manifest);
+
+builder.defineStreamHandler(async ({ id }) => {
+  try {
+    const res = await fetch(LINKS_URL);
+    const data = await res.json();
+
+    if (!data[id]) return { streams: [] };
+
+    return {
+      streams: data[id].map(link => ({
+        title: link.title,
+        url: link.url,
+        quality: link.quality || "HD"
+      }))
+    };
+  } catch {
+    return { streams: [] };
+  }
 });
 
-addon.defineStreamHandler((args) => {
-  const id = args.id;
-  return Promise.resolve({ streams: streams[id] || [] });
-});
-
-const app = express();
-
-app.use("/", addon.getInterface());
-app.listen(3000, () => console.log("Addon funcionando en puerto 3000"));
+module.exports = builder.getInterface();
