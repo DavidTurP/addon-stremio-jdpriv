@@ -11,7 +11,8 @@ const manifest = {
   logo: "https://imgur.com/0dqytIZ.png",
   types: ["movie", "series"],
   catalogs: [],
-  resources: ["stream"]
+  resources: ["stream"],
+  background: "https://imgur.com/vw0C2QE.png"
 };
 
 const builder = new addonBuilder(manifest);
